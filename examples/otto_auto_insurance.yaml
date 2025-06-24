@@ -1,0 +1,79 @@
+offer_id: otto_auto
+offer_metadata:
+  name: Auto Insurance
+  industry: Automotive Insurance Quotes
+  category: Insurance Comparison & Savings
+  description: >
+    Introducing OTTO Insurance's Auto Insurance offer – a seamless experience designed to help you find
+    affordable and comprehensive auto insurance options effortlessly. As part of the OTTO Insurance platform,
+    this offering empowers individuals and families to compare multiple insurance providers, obtain free and
+    fast quotes, and secure significant savings on premiums. Enjoy peace of mind knowing you've chosen the best
+    coverage for your vehicle without the hassle.
+  key_features:
+    - Free and fast quotes
+    - Compare multiple insurance providers
+    - Affordable and comprehensive coverage options
+    - Significant savings on premiums
+    - Empowering user experience
+  brand_elements:
+    - OTTO Insurance branding
+    - Service-oriented and trustworthy approach
+    - Empowering and cost-saving messaging
+    - Modern and user-friendly design
+  ideal_angles:
+    - Digital interface showcasing easy provider comparison
+    - Close-up of the free quote process
+    - Visual emphasis on cost-saving benefits
+    - Lifestyle imagery of families or individuals confident in their choice
+  important_details:
+    - Clear presentation of multiple insurance options
+    - Prominent display of savings and benefits
+    - User-friendly and efficient process
+    - Focus on affordability and comprehensive coverage
+  avoid_showing:
+    - Cluttered or overly technical interfaces
+    - Excessive insurance jargon
+    - Outdated or confusing visuals
+  competitors:
+    - Traditional auto insurance companies
+    - Other online insurance comparison platforms
+    - Direct insurers with limited provider options
+
+reference:
+  video: /data/ref/otto_auto/winner.mp4
+  script: |
+    Hey, I just had to share my experience with OTTO Auto Insurance. I hopped on their site the other day 
+    and was so surprised at how easy it was to get free, personalized quotes in just a matter of minutes. 
+    I compared multiple providers all in one place, which saved me so much time and hassle—no more printer 
+    jams or long phone calls. I was seriously shocked at how affordable the rates turned out to be, and I 
+    still wound up getting comprehensive coverage that fits my busy lifestyle. Honestly, it was way easier 
+    than I expected—like, it took me less time than brewing a cup of coffee. If you're looking for a fast, 
+    affordable way to get car insurance, definitely check them out. I feel like I just found my new 
+    insurance go-to, and I couldn't be happier.
+
+actors:
+  - name: olivia
+    scene_id: 9bd1e9ed-5747-4052-96fe-1b6862e6dada
+  - name: janet
+    scene_id: 5513cdb5-c6c7-483e-8b94-67f6a42f1747
+  - name: ernest
+    scene_id: 6fb4c27f-cf6a-41af-a292-9439b0628187
+
+variants:
+  identical_script: true
+  minor_script_variants: 2
+
+rubric:
+  ensemble: 3
+  temperature: 0.1
+
+providers:
+  tts: eleven
+  face_sync: wav2lip
+
+video_pipeline:
+  ugc_only: false
+  add_captions: true
+  b_roll_style: product_demo
+
+cost_cap: 50.0

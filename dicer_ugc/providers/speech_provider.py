@@ -10,6 +10,7 @@ from ..utils import (
     get_env_var, ensure_dir, get_audio_cache_dir,
     log_info, log_error, log_warning, safe_filename
 )
+from ..models import Actor
 
 
 class ElevenLabsProvider:
@@ -69,7 +70,7 @@ class ElevenLabsProvider:
     async def generate_speech(
         self,
         text: str,
-        actor_id: str,
+        actor: Actor,
         run_id: str,
         force_regenerate: bool = False
     ) -> Tuple[Path, float]:
@@ -81,18 +82,19 @@ class ElevenLabsProvider:
         """
         # Generate cache key
         script_hash = hashlib.md5(text.encode()).hexdigest()
-        cache_path = self._get_cache_path(run_id, actor_id, script_hash)
+        cache_path = self._get_cache_path(run_id, actor.name, script_hash)
         
         # Check cache
         if cache_path.exists() and not force_regenerate:
-            log_info(f"Using cached audio for {actor_id}: {cache_path}")
+            log_info(f"Using cached audio for {actor.name}: {cache_path}")
             return cache_path, 0.0  # No cost for cached
         
         # Generate audio
-        log_info(f"Generating audio for {actor_id} ({len(text)} chars)")
+        log_info(f"Generating audio for {actor.name} ({len(text)} chars)")
         
         try:
-            voice_id = self._get_voice_id(actor_id)
+            # Use actor's voice_id if available, otherwise use mapping
+            voice_id = actor.voice_id or self._get_voice_id(actor.name)
             
             # Generate audio using ElevenLabs
             audio_generator = await self.client.text_to_speech.convert(
@@ -118,7 +120,7 @@ class ElevenLabsProvider:
             return cache_path, cost
             
         except Exception as e:
-            log_error(f"Failed to generate speech for {actor_id}: {e}")
+            log_error(f"Failed to generate speech for {actor.name}: {e}")
             raise
     
     async def validate_voices(self) -> Dict[str, bool]:
@@ -150,13 +152,13 @@ class MockTTSProvider:
     async def generate_speech(
         self,
         text: str,
-        actor_id: str,
+        actor: Actor,
         run_id: str,
         force_regenerate: bool = False
     ) -> Tuple[Path, float]:
         """Generate mock audio file."""
         cache_dir = ensure_dir(get_audio_cache_dir(run_id))
-        filename = f"{actor_id}_mock.mp3"
+        filename = f"{actor.name}_mock.mp3"
         audio_path = cache_dir / filename
         
         if not audio_path.exists() or force_regenerate:

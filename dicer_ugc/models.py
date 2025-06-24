@@ -32,24 +32,68 @@ class RubricDecision(str, Enum):
 
 
 @dataclass
+class Actor:
+    """Actor information."""
+    name: str
+    scene_id: str
+    voice_id: Optional[str] = None  # ElevenLabs voice ID
+    style: Optional[str] = None  # e.g., "energetic", "calm", "professional"
+
+
+@dataclass
+class OfferMetadata:
+    """Product/offer information for context."""
+    name: str
+    industry: str
+    category: str
+    description: str
+    key_features: List[str]
+    brand_elements: List[str]
+    ideal_angles: List[str]
+    important_details: List[str]
+    avoid_showing: List[str]
+    competitors: List[str]
+
+
+@dataclass
 class VariantTask:
     """Represents a single video generation task."""
     task_id: str
-    actor_id: str
+    actor: Actor
     variant_type: VariantType
     variant_num: int
     script_text: Optional[str] = None
+    offer_metadata: Optional[OfferMetadata] = None
     
     def __post_init__(self):
         if not self.task_id:
             # Generate deterministic ID if not provided
-            content = f"{self.actor_id}_{self.variant_type}_{self.variant_num}"
+            content = f"{self.actor.name}_{self.variant_type}_{self.variant_num}"
             self.task_id = hashlib.md5(content.encode()).hexdigest()[:12]
     
     @property
     def output_filename(self) -> str:
         """Generate consistent output filename."""
-        return f"{self.actor_id}_{self.variant_type}_{self.variant_num:02d}.mp4"
+        return f"{self.actor.name}_{self.variant_type}_{self.variant_num:02d}.mp4"
+    
+    @property
+    def actor_id(self) -> str:
+        """Backward compatibility for actor ID."""
+        return self.actor.name
+
+
+@dataclass
+class VideoOutputs:
+    """Video pipeline outputs."""
+    ugc_video: Optional[Path] = None
+    broll_video: Optional[Path] = None
+    captioned_video: Optional[Path] = None
+    timeline_json: Optional[Path] = None
+    
+    @property
+    def final_video(self) -> Optional[Path]:
+        """Get the most processed video available."""
+        return self.captioned_video or self.broll_video or self.ugc_video
 
 
 @dataclass
@@ -61,6 +105,7 @@ class TaskResult:
     end_time: Optional[datetime] = None
     error_message: Optional[str] = None
     outputs: Dict[str, Path] = field(default_factory=dict)
+    video_outputs: Optional[VideoOutputs] = None
     costs: Dict[str, float] = field(default_factory=dict)
     
     @property

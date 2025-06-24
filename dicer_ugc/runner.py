@@ -56,7 +56,7 @@ class PipelineRunner:
     
     async def _process_task(self, task: VariantTask) -> TaskResult:
         """Process a single variant task."""
-        log_info(f"Processing task {task.task_id}: {task.actor_id} - {task.variant_type.value} v{task.variant_num}")
+        log_info(f"Processing task {task.task_id}: {task.actor.name} - {task.variant_type.value} v{task.variant_num}")
         
         result = TaskResult(
             task_id=task.task_id,
@@ -67,7 +67,7 @@ class PipelineRunner:
         try:
             # TODO: Implement actual processing steps
             # 1. Generate TTS audio
-            # audio_path = await self.speech_provider.generate(task.actor_id, task.script_text)
+            # audio_path = await self.speech_provider.generate_speech(task.script_text, task.actor, self.run_id)
             # result.outputs['audio'] = audio_path
             # result.costs['tts'] = tts_cost
             

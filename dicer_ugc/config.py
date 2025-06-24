@@ -1,9 +1,11 @@
 """Configuration management with Pydantic validation."""
 
 from pathlib import Path
-from typing import List, Literal, Optional, Union
+from typing import List, Literal, Optional, Union, Dict
 from pydantic import BaseModel, Field, field_validator, ConfigDict
 import yaml
+
+from .models import Actor, OfferMetadata
 
 
 class ReferenceConfig(BaseModel):
@@ -69,6 +71,14 @@ class ProvidersConfig(BaseModel):
     face_sync: Literal["wav2lip"] = Field("wav2lip", description="Face sync provider")
 
 
+class VideoPipelineConfig(BaseModel):
+    """Video pipeline configuration."""
+    
+    ugc_only: bool = Field(False, description="Skip B-roll and captions")
+    add_captions: bool = Field(True, description="Add captions to final video")
+    b_roll_style: Optional[str] = Field(None, description="B-roll style/theme")
+
+
 class PipelineConfig(BaseModel):
     """Main pipeline configuration."""
     
@@ -78,15 +88,17 @@ class PipelineConfig(BaseModel):
     )
     
     offer_id: str = Field(description="Unique offer identifier")
+    offer_metadata: Optional[OfferMetadata] = Field(None, description="Product/offer information")
     reference: ReferenceConfig
-    actors: List[str] = Field(
-        description="List of actor IDs",
+    actors: List[Union[str, Dict, Actor]] = Field(
+        description="List of actors (names, dicts, or Actor objects)",
         min_length=1,
         max_length=20
     )
     variants: VariantConfig = Field(default_factory=VariantConfig)
     rubric: RubricConfig = Field(default_factory=RubricConfig)
     providers: ProvidersConfig = Field(default_factory=ProvidersConfig)
+    video_pipeline: VideoPipelineConfig = Field(default_factory=VideoPipelineConfig)
     cost_cap: float = Field(
         30.0,
         description="Maximum cost in USD",
@@ -95,13 +107,28 @@ class PipelineConfig(BaseModel):
     )
     
     @field_validator('actors')
-    def validate_actors(cls, v: List[str]) -> List[str]:
-        if len(v) != len(set(v)):
-            raise ValueError("Duplicate actor IDs found")
-        for actor_id in v:
-            if not actor_id.startswith('act_'):
-                raise ValueError(f"Actor ID must start with 'act_': {actor_id}")
-        return v
+    def validate_actors(cls, v: List[Union[str, Dict, Actor]]) -> List[Actor]:
+        """Convert various actor formats to Actor objects."""
+        actors = []
+        names_seen = set()
+        
+        for item in v:
+            if isinstance(item, Actor):
+                actor = item
+            elif isinstance(item, dict):
+                actor = Actor(**item)
+            elif isinstance(item, str):
+                # Legacy format - just actor name
+                actor = Actor(name=item, scene_id="")
+            else:
+                raise ValueError(f"Invalid actor format: {type(item)}")
+            
+            if actor.name in names_seen:
+                raise ValueError(f"Duplicate actor name: {actor.name}")
+            names_seen.add(actor.name)
+            actors.append(actor)
+        
+        return actors
     
     @property
     def total_videos(self) -> int:
@@ -141,6 +168,10 @@ def load_config(config_path: Path) -> PipelineConfig:
     if 'reference' in data and 'video' in data['reference']:
         data['reference']['video'] = Path(data['reference']['video'])
     
+    # Convert offer_metadata if present
+    if 'offer_metadata' in data and isinstance(data['offer_metadata'], dict):
+        data['offer_metadata'] = OfferMetadata(**data['offer_metadata'])
+    
     return PipelineConfig(**data)
 
 
@@ -153,9 +184,18 @@ def save_example_config(output_path: Path) -> None:
             "script": "/data/ref/ccw713/winner.txt"
         },
         "actors": [
-            "act_emu01",
-            "act_fox02", 
-            "act_lion03"
+            {
+                "name": "olivia",
+                "scene_id": "9bd1e9ed-5747-4052-96fe-1b6862e6dada"
+            },
+            {
+                "name": "janet",
+                "scene_id": "5513cdb5-c6c7-483e-8b94-67f6a42f1747"
+            },
+            {
+                "name": "ernest",
+                "scene_id": "6fb4c27f-cf6a-41af-a292-9439b0628187"
+            }
         ],
         "variants": {
             "identical_script": True,
@@ -168,6 +208,11 @@ def save_example_config(output_path: Path) -> None:
         "providers": {
             "tts": "eleven",
             "face_sync": "wav2lip"
+        },
+        "video_pipeline": {
+            "ugc_only": False,
+            "add_captions": True,
+            "b_roll_style": "product_demo"
         },
         "cost_cap": 30.0
     }
