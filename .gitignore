@@ -29,5 +29,5 @@ cost_report.json
 Thumbs.db
 
 # Secrets
-config.yaml
+/config.yaml
 *.key
